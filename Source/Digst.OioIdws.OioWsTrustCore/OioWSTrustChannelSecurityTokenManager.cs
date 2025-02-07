@@ -46,7 +46,7 @@ namespace Digst.OioIdws.OioWsTrustCore
                 var bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
 #pragma warning restore S3011 // Reflection should not be used to increase accessibility of classes, methods, or fields
                 var propertyInfo = provider.GetType().GetProperty("ClientCredentials", bindingAttr);
-                propertyInfo.SetValue(provider, _wsTrustChannelClientCredentials.ClientCredentials);
+                propertyInfo!.SetValue(provider, _wsTrustChannelClientCredentials.ClientCredentials);
 
                 provider.CustomClientCredentials = _wsTrustChannelClientCredentials.ClientCredentials;
 

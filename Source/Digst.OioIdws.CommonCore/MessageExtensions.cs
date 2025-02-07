@@ -88,7 +88,7 @@ namespace Digst.OioIdws.CommonCore
         {
             var xmlDocument = new XmlDocument();
             xmlDocument.LoadXml(xElement.ToString());
-            return xmlDocument.DocumentElement;
+            return xmlDocument.DocumentElement!;
         }
 
         /// <summary>

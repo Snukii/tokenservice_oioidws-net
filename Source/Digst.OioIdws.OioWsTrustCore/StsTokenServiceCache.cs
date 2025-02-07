@@ -12,7 +12,7 @@ namespace Digst.OioIdws.OioWsTrustCore
     public class StsTokenServiceCache : StsTokenServiceBase
     {
         private readonly StsTokenServiceBase _stsTokenService;
-        private static readonly MemoryCache TokenCache = new MemoryCache(typeof(StsTokenServiceCache).FullName, new NameValueCollection { { "pollingInterval", "00:00:30" } });
+        private static readonly MemoryCache TokenCache = new MemoryCache(typeof(StsTokenServiceCache).FullName!, new NameValueCollection { { "pollingInterval", "00:00:30" } });
         private readonly TimeSpan _cacheClockSkew;
         private readonly string _wspEndpointId;
         private readonly string _cvr;
