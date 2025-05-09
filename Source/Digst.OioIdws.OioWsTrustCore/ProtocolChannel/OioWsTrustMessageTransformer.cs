@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Security;
@@ -136,7 +137,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
             var envelopeElement = xDocument.XPathSelectElement("/s:Envelope", namespaceManager);
 
             // This namespace is required. If not added then Id attributes is not correctly prefixed with "wsu" and RST becomes invalid according to standard.
-            envelopeElement!.Add(new XAttribute(XNamespace.Xmlns + Namespaces.WsuPrefix, Namespaces.WsuNamespace));
+            envelopeElement.Add(new XAttribute(XNamespace.Xmlns + Namespaces.WsuPrefix, Namespaces.WsuNamespace));
         }
 
         private void ManipulateHeader(XDocument xDocument)
@@ -154,7 +155,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
             var actionElement = xDocument.XPathSelectElement("/s:Envelope/s:Header/a:Action", namespaceManager);
             var messageIdElement = new XElement(XName.Get(WsAddressing.WsAddressingMessageId, Namespaces.WsaNamespace));
             messageIdElement.Value = "uuid:" + Guid.NewGuid().ToString("D");
-            actionElement!.AddAfterSelf(messageIdElement);
+            actionElement.AddAfterSelf(messageIdElement);
 
             // a:To is normally set to the URI of the service endpoint by the framework which is not what we need here and therefore we neeed to set it manually.
             // In order to work ... ManualAddressing must be set to true on HttpsTransportBindingElement or else the a:To is overwritten in the HttpsTransportChannel.
@@ -164,7 +165,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
 
             // Add Security element
             var headerElement = xDocument.XPathSelectElement("/s:Envelope/s:Header", namespaceManager);
-            headerElement!.Add(BuildSecurityElement());
+            headerElement.Add(BuildSecurityElement());
         }
 
         private static XmlNamespaceManager CreateXmlNamespaceManagerForRequestHeader()
@@ -188,7 +189,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
 
             // Remove last '/' in endpoint address. Due to new URI(...) automatically adds an ending '/'.
             var addressReferenceElement = xDocument.XPathSelectElement("/s:Envelope/s:Body/trust:RequestSecurityToken/wsp:AppliesTo/wsa:EndpointReference/wsa:Address", namespaceManager);
-            RemoveEndingForwardSlash(addressReferenceElement!);
+            RemoveEndingForwardSlash(addressReferenceElement);
 
             // Change lifetime expires format if present from "yyyy-MM-ddTHH:mm:ss.fffZ" to "yyyy-MM-ddTHH:mm:ssZ"
             var lifetimeElement = xDocument.XPathSelectElement("/s:Envelope/s:Body/trust:RequestSecurityToken/trust:Lifetime/wsu:Expires", namespaceManager);
@@ -212,7 +213,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
                 issuerElement.Add(endpointRefElement);
 
                 var requestSecurityTokenElement = xDocument.XPathSelectElement("/s:Envelope/s:Body/trust:RequestSecurityToken", namespaceManager);
-                requestSecurityTokenElement!.Add(issuerElement);
+                requestSecurityTokenElement.Add(issuerElement);
             }
         }
 
@@ -248,7 +249,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
         private static DateTime ValidateTimestamp(XDocument xDocument, XmlNamespaceManager namespaceManager)
         {
             var messageExpireTimeElement = xDocument.XPathSelectElement("/s:Envelope/s:Header/wsse:Security/wsu:Timestamp/wsu:Expires", namespaceManager);
-            var messageExpireZuluTime = GetPatchedDateTime(messageExpireTimeElement!.Value);
+            var messageExpireZuluTime = GetPatchedDateTime(messageExpireTimeElement.Value);
 
             // Expiry time is currently not on the format specified by the spec. The spec says yyyy-MM-ddTHH:mm:ssZ but yyyy-MM-ddTHH:mm:ss.fffZ is currently retrieved.
             // Verify life time of SOAP message
@@ -261,7 +262,7 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
 
             // Verify life time of RSTS
             var rstsExpireTimeElement = xDocument.XPathSelectElement("/s:Envelope/s:Body/wst:RequestSecurityTokenResponseCollection/wst:RequestSecurityTokenResponse/wst:Lifetime/wsu:Expires", namespaceManager);
-            var rstsExpireZuluTime = GetPatchedDateTime(rstsExpireTimeElement!.Value);
+            var rstsExpireZuluTime = GetPatchedDateTime(rstsExpireTimeElement.Value);
             if (currentZuluTime >= rstsExpireZuluTime)
             {
                 Logger.Instance.Error($"RSTS has expired. Current Zulu time was: {currentZuluTime}, RSTS Zulu expiry time was: {rstsExpireZuluTime}");
@@ -274,11 +275,11 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
         private void ValidateReplayAttack(XDocument xDocument, XmlNamespaceManager namespaceManager, DateTime messageExpireZuluTime)
         {
             var signatureValueElement = xDocument.XPathSelectElement("/s:Envelope/s:Header/wsse:Security/d:Signature/d:SignatureValue", namespaceManager);
-            if (_configuration.ReplayAttackCache.DoesKeyExist(signatureValueElement!.Value))
+            if (_configuration.ReplayAttackCache.DoesKeyExist(signatureValueElement.Value))
             {
                 var relatesToElement = xDocument.XPathSelectElement("/s:Envelope/s:Header/wsa:RelatesTo",
                     namespaceManager);
-                Logger.Instance.Error($"Replay attack detected. Response of message with id: {relatesToElement!.Value}, Signature: {signatureValueElement.Value}");
+                Logger.Instance.Error($"Replay attack detected. Response of message with id: {relatesToElement.Value}, Signature: {signatureValueElement.Value}");
                 throw new MessageSecurityException("Replay attack detected. Response of message with id: " + relatesToElement.Value);
             }
             else
@@ -331,12 +332,12 @@ namespace Digst.OioIdws.OioWsTrustCore.ProtocolChannel
             var bodyElement = xDocument.XPathSelectElement("/s:Envelope/s:Body", namespaceManager);
 
             var idXName = XName.Get("Id", Namespaces.WsuNamespace);
-            actionElement!.Add(new XAttribute(idXName, IdValue.ActionIdValue));
-            msgElement!.Add(new XAttribute(idXName, IdValue.MessageIdIdValue));
-            toElement!.Add(new XAttribute(idXName, IdValue.ToIdValue));
-            timeStampElement!.Add(new XAttribute(idXName, IdValue.TimeStampIdValue));
-            binarySecurityTokenElement!.Add(new XAttribute(idXName, IdValue.BinarySecurityTokenIdValue));
-            bodyElement!.Add(new XAttribute(idXName, IdValue.BodyIdValue));
+            actionElement.Add(new XAttribute(idXName, IdValue.ActionIdValue));
+            msgElement.Add(new XAttribute(idXName, IdValue.MessageIdIdValue));
+            toElement.Add(new XAttribute(idXName, IdValue.ToIdValue));
+            timeStampElement.Add(new XAttribute(idXName, IdValue.TimeStampIdValue));
+            binarySecurityTokenElement.Add(new XAttribute(idXName, IdValue.BinarySecurityTokenIdValue));
+            bodyElement.Add(new XAttribute(idXName, IdValue.BodyIdValue));
 
             var idOfElementsThatMustBeSigned = new List<string>
             {

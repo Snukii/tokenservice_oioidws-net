@@ -1,11 +1,8 @@
-﻿using System.Reflection;
-using Digst.OioIdws.CommonCore;
+﻿using Digst.OioIdws.CommonCore;
 using Digst.OioIdws.SoapCore;
 using Microsoft.Extensions.Caching.Distributed;
-
-// using Microsoft.Extensions.Caching.Distributed;
-// using System.Reflection;
-// using System.Runtime.Caching;
+using System.Reflection;
+using System.Runtime.Caching;
 
 namespace Digst.OioIdws.IntegrationTests;
 

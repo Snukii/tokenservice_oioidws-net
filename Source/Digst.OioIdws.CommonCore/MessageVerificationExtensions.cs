@@ -48,7 +48,7 @@ namespace Digst.OioIdws.CommonCore
 
             var signedInfo = XElement.Parse(signatureElement.OuterXml).Elements().First(x => x.Name.LocalName == "SignedInfo");
             var refUries = signedInfo.Elements().Where(x => x.Name.LocalName == "Reference")
-                .Select(x => x.Attribute("URI")!.Value).ToList();
+                .Select(x => x.Attribute("URI").Value).ToList();
 
             // Ensure that the Body (at correct position - not wrapped) is signed
             VerifyRequiredElement(xDocument, refUries, "/s:Envelope/s:Body", namespaceManager, "Body '{0}' is required and must be signed.");
